@@ -147,14 +147,15 @@ def day04_01():
                 currentGuard = Guard(guardID)
                 guards[guardID] = currentGuard
         elif(item.act == 'falls asleep'):
+            item.guardO = currentGuard
             timeStart = item.time
         elif(item.act == 'wakes up'):
+            item.guardO = currentGuard
             timeEnd = item.time
             sleepTime = int((timeEnd - timeStart).total_seconds()/60)
             currentGuard.totalSleepTime += sleepTime
-            if(sleepTime > currentGuard.longestSleep):
-                currentGuard.longestSleep = sleepTime
-                currentGuard.longestMin = timeStart.minute
+            for x in range(timeStart.minute,timeEnd.minute):
+                currentGuard.sleepMinutes[x] += 1
     bestGuard = None
     for g in guards:
         currentGuard = guards[g]
@@ -163,8 +164,30 @@ def day04_01():
         else:
             if(currentGuard.totalSleepTime > bestGuard.totalSleepTime):
                 bestGuard = currentGuard
-    print('Guard ' + str(bestGuard.id) + ' was asleep for ' + str(bestGuard.totalSleepTime) + ' minutes, with the longest sleep starting at minute ' + str(bestGuard.longestMin) + '.')
-    print('Result: ' + str(int(bestGuard.id) * int(bestGuard.longestMin)))
+    print('Guard ' + str(bestGuard.id) + ' was asleep the longest with ' + str(bestGuard.totalSleepTime) + ' total asleep minutes.')
+    bestTime = int(bestGuard.id) * int(bestGuard.sleepMinutes.index(max(bestGuard.sleepMinutes)))
+    print('Best Guard Time: ' + str(bestTime))
+
+    # Day 04 - Part 2
+    bestGuard = None
+    bestMinute = -1
+    bestTime = 0
+    for g in guards:
+        currentGuard = guards[g]
+        numTimes = max(currentGuard.sleepMinutes)
+        minuteIndex = currentGuard.sleepMinutes.index(numTimes)
+        if(bestGuard is None):
+            bestGuard = currentGuard
+            bestMinute = minuteIndex
+            bestTime = numTimes
+        else:
+            if(numTimes > bestTime):
+                bestGuard = currentGuard
+                bestMinute = minuteIndex
+                bestTime = numTimes
+    print('Guard ' + str(bestGuard.id) + ' was asleep the most times on minute ' + str(bestMinute))
+    print('Result: ' + str(int(bestGuard.id) * bestMinute))
+
 
             
 class Guard:
@@ -172,14 +195,14 @@ class Guard:
     def __init__(self, id):
         self.id = id
         self.totalSleepTime = 0
-        self.longestSleep = 0
-        self.longestMin = 0
+        self.sleepMinutes = [0 for x in range(59)]
 
 class Activity:
 
     def __init__(self,act,timeStamp):
         self.act = act
         self.time = timeStamp
+        self.guardO = None
 
 if __name__ == '__main__':
     main()
