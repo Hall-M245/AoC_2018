@@ -7,7 +7,8 @@ def main():
     #day02_01()
     #day02_02()
     #day03_01()
-    day04_01()
+    #day04_01()
+    day05_01()
 
 def day01_01():
     freq = 0
@@ -187,8 +188,6 @@ def day04_01():
                 bestTime = numTimes
     print('Guard ' + str(bestGuard.id) + ' was asleep the most times on minute ' + str(bestMinute))
     print('Result: ' + str(int(bestGuard.id) * bestMinute))
-
-
             
 class Guard:
 
@@ -203,6 +202,54 @@ class Activity:
         self.act = act
         self.time = timeStamp
         self.guardO = None
+
+def day05_01():
+    suitChain = ''
+    with open('input/input_0501.txt', 'r') as inFile:
+        line = inFile.readline().strip()
+        while line:
+            suitChain += line
+            line = inFile.readline().strip()
+    oldChain = suitChain
+    newChain = ''
+    complete = False
+    regexCode = createChainRegEx()
+    while (not complete):
+        newChain = re.sub(regexCode,'',oldChain)
+        if(newChain != oldChain):
+            oldChain = newChain
+        else:
+            complete = True
+    print('New Chain Length: ' + str(len(newChain)))
+
+    smallestChain = -1
+    polyList = 'abcdefghijklmnopqrstuvwxyz'
+    for x in range(len(polyList)):
+        oldChain = suitChain
+        oldChain = oldChain.replace(polyList[x],'').replace(polyList[x].upper(),'')
+        complete = False
+        newChain = ''
+        while (not complete):
+            newChain = re.sub(regexCode,'',oldChain)
+            if(newChain != oldChain):
+                oldChain = newChain
+            else:
+                complete = True
+        chainLength = len(newChain)
+        if(smallestChain == -1):
+            smallestChain = chainLength
+        elif(chainLength < smallestChain):
+            smallestChain = chainLength
+    print('Smallest Chain Length: ' + str(smallestChain))
+
+def createChainRegEx():
+    reg = []
+    a = 'abcdefghijklmnopqrstuvwxyz'
+    for x in range(len(a)):
+        reg.append(a[x] + a[x].upper())
+        reg.append(a[x].upper() + a[x])
+    msg = '|'.join([str(x) for x in reg])
+    return(msg)
 
 if __name__ == '__main__':
     main()
