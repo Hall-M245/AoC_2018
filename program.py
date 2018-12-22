@@ -908,19 +908,25 @@ def day10():
     # Time advance
     v = grid['maxV'] * 2
     for t in range(1):
-        sMap = [[' ' for y in range(grid['maxY']+v)] for x in range(grid['maxX']+v)]
+        #sMap = [[' ' for y in range(grid['maxY']+v)] for x in range(grid['maxX']+v)]
         oFile.write('Time: ' + str(t) + '\n')
         for s in stars:
             pX = s.pos['x'] + (s.vel['x']*t)
             pY = s.pos['y'] + (s.vel['y']*t)
             #print(str(s.pos['x']) + ',' + str(s.pos['y']))
-            sMap[pY][pX] = '#'
+            #sMap[pY][pX] = '#'
         for y in range(grid['maxY']+v):
             oFile.write(str(y) + ':\t')
-            msg = ''
             for x in range(grid['maxX']+v):
-                msg += sMap[y][x]
-            oFile.write(msg + '\n')
+                for s in stars:
+                    pX = s.pos['x'] + (s.vel['x']*t)
+                    pY = s.pos['y'] + (s.vel['y']*t)
+                    if(pX == x and pY == y):
+                        oFile.write('#')
+                        break
+                    else:
+                        oFile.write('')
+            oFile.write('\n')
         oFile.write('\n')
     oFile.close()
 
