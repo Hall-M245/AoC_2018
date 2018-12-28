@@ -1,20 +1,6 @@
 import re
 from datetime import datetime
 
-def main():
-    #day01_01()
-    #day01_02()
-    #day02_01()
-    #day02_02()
-    #day03_01()
-    #day04_01()
-    #day05_01()
-    #day06_01()
-    #day07_01()
-    #day08_01()
-    #day09()
-    day10()
-
 def day01_01():
     freq = 0
     with open('input/input_0101.txt', 'r') as inFile:
@@ -892,42 +878,71 @@ def day10():
             if(abs(s.vel['y'] > grid['maxV'])):
                 grid['maxV'] = abs(s.vel['y'])
             line = inFile.readline().strip()
-    print(grid)
-    shiftX = grid['minX']
-    shiftY = grid['minY']
-    grid['maxX'] = grid['maxX'] - grid['minX']
-    grid['minX'] = 0
-    grid['maxY'] = grid['maxY'] - grid['minY']
-    grid['minY'] = 0
     oFile = open('output.txt','w')
-    oFile.write('Grid Size (X by Y) := (' + str(grid['maxX']) + ',' + str(grid['maxY']) + ')\n')
-    # Star normalization
-    for s in stars:
-        s.pos['x'] -= shiftX
-        s.pos['y'] -= shiftY
+    
+    # Print the stars
+    #for s in stars:
+        #oFile.write('position=< ' + str(s.pos['x']) + ', ' + str(s.pos['y']) + '> velocity=<' + str(s.vel['x']) + ', ' + str(s.vel['y']) + '>\n')
+
     # Time advance
-    v = grid['maxV'] * 2
-    for t in range(1):
-        #sMap = [[' ' for y in range(grid['maxY']+v)] for x in range(grid['maxX']+v)]
-        oFile.write('Time: ' + str(t) + '\n')
+    step = 1
+    start = 10008
+    stop = 10009
+    
+    oFile.write('Start, Grid:= (' + str(grid['maxX']) + ',' + str(grid['maxY']) + ')\n')
+    for s in stars:
+        s.pos['x'] += (s.vel['x'] * start)
+        s.pos['y'] += (s.vel['y'] * start)
+    for t in range(start,stop,step):
+        # Reset the minimum and maximum of the grid
+        grid['minX'] = 1000000
+        grid['minY'] = 1000000
+        grid['maxX'] = -1000000
+        grid['maxY'] = -1000000
+        # Loop through each star and calculate its
+        # new position based on its velocity
         for s in stars:
-            pX = s.pos['x'] + (s.vel['x']*t)
-            pY = s.pos['y'] + (s.vel['y']*t)
-            #print(str(s.pos['x']) + ',' + str(s.pos['y']))
-            #sMap[pY][pX] = '#'
-        for y in range(grid['maxY']+v):
+            pX = s.pos['x'] + (s.vel['x'] * step)
+            pY = s.pos['y'] + (s.vel['y'] * step)
+            # X-Values
+            if(pX < grid['minX']):
+                grid['minX'] = pX
+            if(pX > grid['maxX']):
+                grid['maxX'] = pX
+            # Y-Values
+            if(pY < grid['minY']):
+                grid['minY'] = pY
+            if(pY > grid['maxY']):
+                grid['maxY'] = pY
+            s.pos['x'] = pX
+            s.pos['y'] = pY
+        # Normalize grid
+        grid['minX'] -= 1
+        grid['minY'] -= 1
+        grid['maxX'] += 1
+        grid['maxY'] += 1
+        shiftX = grid['minX']
+        shiftY = grid['minY']
+        grid['minX'] = 0
+        grid['minY'] = 0
+        grid['maxX'] -= shiftX
+        grid['maxY'] -= shiftY
+        oFile.write('Time:= ' + str(t) + ', ' + str(grid) +'\n')
+        # Normalize stars
+        for s in stars:
+            s.pos['x_new'] = s.pos['x'] - shiftX
+            s.pos['y_new'] = s.pos['y'] - shiftY
+        sMap = [[' ' for x in range(grid['maxX'])] for y in range(grid['maxY'])]
+        for s in stars:
+            #print(s.pos)
+            sMap[s.pos['y_new']][s.pos['x_new']] = '#'
+        for y in range(grid['maxY']):
             oFile.write(str(y) + ':\t')
-            for x in range(grid['maxX']+v):
-                for s in stars:
-                    pX = s.pos['x'] + (s.vel['x']*t)
-                    pY = s.pos['y'] + (s.vel['y']*t)
-                    if(pX == x and pY == y):
-                        oFile.write('#')
-                        break
-                    else:
-                        oFile.write('')
+            for x in range(grid['maxX']):
+                oFile.write(sMap[y][x])
             oFile.write('\n')
         oFile.write('\n')
+    oFile.write('Waiting time:= ' + str(t+1) + ' seconds.')
     oFile.close()
 
 class Star():
@@ -950,6 +965,119 @@ class Star():
     
     def __repr__(self):
         return ('Star ' + str(self.id))
+
+def day11():
+    serial = -1
+    maxSize = 300
+    with open('input/input_11.txt', 'r') as inFile:
+        serial = int(inFile.readline().strip())
+    grid = [[FuelCell(x,y,serial) for x in range(maxSize)] for y in range(maxSize)]
+    oFile = open('output.txt','w')
+    oFile.write('Serial Number: ' + str(serial) + '\n')
+    # Print Top X-Coordinates
+    oFile.write('\t\t' + ' '.join(['[{0:0=3d}]'.format(x+1) for x in range(maxSize)]) + '\n')
+    # # Print power levels of each cell
+    # for y in range(maxSize):
+    #     oFile.write('[{0:0=3d}]'.format(y+1) + '\t')
+    #     for x in range(maxSize):
+    #         oFile.write('{0:0=5d}'.format(grid[y][x].power) + ' ')
+    #     oFile.write('\n')
+    # oFile.write('\n\n')
+    # Calculate the 3x3 Power Cells
+    superMaxPower = 0
+    superX = 0
+    superY = 0
+    superGrid = 0
+    grid2 = [[0 for x in range(maxSize)] for y in range(maxSize)] # Creat the Super Cell Grid
+    # Cycle through all allowed grid sizes of 1x1 to 300x300
+    for gridSize in range(0,50):
+        print('GridSize:= ' + str(gridSize))
+        maxPower = 0
+        maxX = 0
+        maxY = 0
+        # Cycle through the power grid
+        for y in range(0,maxSize):
+            for x in range(0,maxSize):
+                if((x+gridSize < maxSize) and (y+gridSize < maxSize)):
+                    # oFile.write('Working on Cell(' + str(x) + ',' + str(y) + ')\n')
+                    # Move along the x-axis and add cells at max y-range
+                    for i in range(0,gridSize):
+                        grid2[y][x] += grid[y+gridSize][x+i].power
+                        #oFile.write('\tAdded power from Cell(' + str(x+i) + ',' + str(gridSize) + ')\n')
+                    for j in range(0,gridSize):
+                        grid2[y][x] += grid[y+j][x+gridSize].power
+                        #oFile.write('\tAdded power from Cell(' + str(gridSize) + ',' + str(y+j) + ')\n')
+                    grid2[y][x] += grid[y+gridSize][x+gridSize].power
+                    # oFile.write('\tAdded power from Cell(' + str(x+gridSize) + ',' + str(y+gridSize) + ')\n')
+                    # Determine the power of this super cell at this grid size
+                else:
+                    grid2[y][x] = -1000
+                p = grid2[y][x]
+                if(p > maxPower):
+                    maxPower = p
+                    maxX = x +1
+                    maxY = y+1
+        # Check to see if the best super cell at this grid size is the best ever
+        if(maxPower > superMaxPower):
+            superMaxPower = maxPower
+            superX = maxX
+            superY = maxY
+            superGrid = gridSize +1 
+        oFile.write('Grid Size: ' + str(gridSize) + ', Max Power: ' + str(maxPower) + ', Cell(' + str(maxX) + ',' + str(maxY) + ')\n')
+        # # Print Top X-Coordinates
+        # oFile.write('\t\t' + ' '.join(['[{0:0=3d}]'.format(x+1) for x in range(maxSize)]) + '\n')
+        # # Print power levels of each cell
+        # for y in range(maxSize):
+        #     oFile.write('[{0:0=3d}]'.format(y+1) + '\t')
+        #     for x in range(maxSize):
+        #         oFile.write('{0:0=5d}'.format(grid2[y][x]) + ' ')
+        #     oFile.write('\n')
+        # oFile.write('\n\n')
+    oFile.write('\nSuper Grid Size: ' + str(superGrid) + ', Max Power: ' + str(superMaxPower) + ', Cell(' + str(superX) + ',' + str(superY) + ')\n')             
+    oFile.close()
+
+class FuelCell:
+
+    def __init__(self,x,y,serial):
+        self.x = int(x)+1
+        self.y = int(y)+1
+        self.serial = serial
+        self.rackID = self.x + 10
+        self.power = (self.rackID * self.y)
+        self.power += self.serial
+        self.power *= self.rackID
+        self.power = (self.power/100)%10
+        self.power -= 5
+
+    def __str__(self):
+        return 'Fuel Cell (' + str(self.x) + ',' + str(self.y) + ')\tPower: ' + str(self.power)
+
+    def __repr__(self):
+        return 'Fuel Cell (' + str(self.x) + ',' + str(self.y) + ')\tPower: ' + str(self.power)
+
+    def calcPower(self):
+        msg = ''
+        self.rackID = self.x + 10
+        msg = 'The rack ID is ' + str(self.x) + ' + 10 = ' + str(self.rackID) + '\n'
+        self.power = (self.rackID * self.y)
+        msg += 'The power level starts at ' + str(self.rackID) + ' * ' + str(self.y) + ' = ' + str(self.power) + '\n'
+
+        return msg
+
+def main():
+    #day01_01()
+    #day01_02()
+    #day02_01()
+    #day02_02()
+    #day03_01()
+    #day04_01()
+    #day05_01()
+    #day06_01()
+    #day07_01()
+    #day08_01()
+    #day09()
+    #day10()
+    day11()
 
 if __name__ == '__main__':
     main()
